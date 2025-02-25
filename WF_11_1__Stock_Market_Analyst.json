@@ -1,0 +1,273 @@
+{
+  "name": "WF-11.1: Stock Market Analyst",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -440,
+        -80
+      ],
+      "id": "e8e40e3c-853e-4795-8528-703b60347071",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ed9ad26e-9a97-49b1-8c1c-3a2dbd87aaf0",
+              "name": "ticker",
+              "value": "={{ $json.query }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -220,
+        -80
+      ],
+      "id": "89a56b4e-b9a6-4363-90d9-add56718efe0",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.chart-img.com/v2/tradingview/advanced-chart/storage",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "i7dwGVDgcq3OvRYJpeWcf1fWrboL3b2218MXXtap"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"theme\": \"dark\",\n  \"interval\": \"1W\",\n  \"symbol\": \"NASDAQ:{{ $json.ticker }}\",\n  \"override\": {\n    \"showStudyLastValue\": false\n  },\n  \"studies\": [\n    {\n      \"name\": \"Volume\",\n      \"forceOverlay\": true\n    },\n    {\n      \"name\": \"MACD\",\n      \"override\": {\n        \"Signal.linewidth\": 2,\n        \"Signal.color\": \"rgb(255,65,129)\"\n      }\n    }\n  ]\n}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -20,
+        -80
+      ],
+      "id": "d34dc6ad-bb14-4081-bbc9-f2736a1f3af3",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        200,
+        -80
+      ],
+      "id": "93aec0f7-03cc-4163-9493-882aa93cea07",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "text": "=# Role\n\nYou are an expert financial analyst specializing in technical analysis of stock charts. Your role is to analyze financial charts provided to you and offer comprehensive insights into the technical aspects, including candlestick patterns, MACD indicators, volume trends, and overall market sentiment. You must provide a detailed breakdown of the chart, highlighting key areas of interest and actionable insights.\n\nWhen analyzing a stock chart, always include the following:\n\n1. **Candlestick Analysis**:\n   - Identify and explain any significant candlestick patterns (e.g., bullish engulfing, doji, hammer).\n   - Comment on the overall trend (bullish, bearish, or sideways).\n   - Highlight any breakout or pullback zones.\n\n2. **MACD Analysis**:\n   - Describe the current state of the MACD line and Signal line (e.g., bullish crossover, bearish crossover).\n   - Discuss the MACD histogram and its implications for momentum.\n   - Identify any divergences between the MACD and the price action.\n\n3. **Volume Analysis**:\n   - Highlight any significant changes in trading volume.\n   - Explain how volume supports or contradicts price movements.\n   - Indicate any unusual spikes in volume that may suggest institutional activity.\n\n4. **Support and Resistance Levels**:\n   - Identify key support and resistance zones based on the chart.\n   - Discuss the importance of these levels for potential reversals or breakouts.\n\n5. **Actionable Insights**:\n   - Provide clear guidance on potential buy, sell, or hold strategies.\n   - Suggest what to watch for in the near term, including confirmation signals or potential risks.\n\n6. **Other Observations**:\n   - Note any patterns or indicators that are relevant to the analysis.\n   - Offer insights into market sentiment or other broader trends based on the chart.\n\nBe clear, concise, and data-driven in your analysis. Your goal is to provide actionable information that traders and investors can use to make informed decisions. Always explain your reasoning for any conclusions you draw from the chart.\n",
+        "inputType": "base64",
+        "simplify": false,
+        "options": {
+          "detail": "auto"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -420,
+        160
+      ],
+      "id": "9d9e3f80-88a2-4e84-aa6f-577e0c83a109",
+      "name": "OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "ieWS9WWeYylZWArQ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendPhoto",
+        "chatId": "5922369001",
+        "file": "={{ $('HTTP Request').item.json.url }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -120,
+        160
+      ],
+      "id": "a0f784ba-6598-498f-a626-6f3f8d69c078",
+      "name": "Telegram",
+      "webhookId": "b8da0c44-cfe3-4aef-b43a-481b5727e6b9",
+      "credentials": {
+        "telegramApi": {
+          "id": "7bFEC7aZQqV6hJh5",
+          "name": "Telegram chartbot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8d6e5c95-49a7-4c48-8c98-c3817aae8e7e",
+              "name": "response",
+              "value": "={{ $('OpenAI').item.json.choices[0].message.content }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        180,
+        160
+      ],
+      "id": "651a2aa3-9a9d-4613-b338-911cf346f5f8",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "content": "## WF-11.1: Stock Market Analyst",
+        "height": 80,
+        "width": 380
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -280,
+        -200
+      ],
+      "typeVersion": 1,
+      "id": "8f503ff4-65e0-4016-9f08-907a2e8db746",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "json": {
+          "query": "AAPL"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "0b5c7adc-22dc-4cd0-800e-098dee60e02e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "32abcfe23a703a294bd580240a37e884f6782ba42aeff437bff7e0a3461ea3a4"
+  },
+  "id": "0pUZ18opxRbimDnS",
+  "tags": []
+}
